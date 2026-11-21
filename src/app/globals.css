@@ -1,12 +1,79 @@
-@tailwind base; @tailwind components; @tailwind utilities;
-:root { --bg: #f6f8ff; --card: #ffffff; --text: #0a1633; --muted: #5b6b8c; }
-.dark { --bg: #050b1f; --card: #0a1633; --text: #eef2ff; --muted: #94a3c8; }
-body { background: var(--bg); color: var(--text); font-family: Inter, system-ui, sans-serif; }
-.card { background: var(--card); border: 1px solid rgba(99,102,241,.18); border-radius: 1rem; }
-.grad-text { background: linear-gradient(90deg,#818cf8,#2dd4bf); -webkit-background-clip: text; background-clip: text; color: transparent; }
-.btn-primary { @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-semibold text-white shadow-glow hover:opacity-90 transition; }
-.btn-ghost { @apply inline-flex items-center justify-center gap-2 rounded-full border border-indigo-400/40 px-6 py-3 font-semibold hover:bg-indigo-500/10 transition; }
-.input { @apply w-full rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-navy px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500; color: var(--text); }
-.skeleton { @apply animate-pulse rounded-xl bg-slate-300/40 dark:bg-slate-700/40; }
-@keyframes fadeUp { from { opacity: 0; transform: translateY(12px);} to { opacity: 1; transform: none;} }
-.fade-up { animation: fadeUp .5s ease both; }
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --bg: #f7f9ff;
+  --surface: #ffffff;
+  --surface-soft: #eef2ff;
+  --text: #111b35;
+  --muted: #64708b;
+  --line: rgba(99, 102, 241, .16);
+  --accent: #5548e8;
+}
+.dark {
+  color-scheme: dark;
+  --bg: #070d20;
+  --surface: #0d1730;
+  --surface-soft: #121f3d;
+  --text: #f2f5ff;
+  --muted: #9aa8c7;
+  --line: rgba(129, 140, 248, .19);
+  --accent: #8b83ff;
+}
+html { scroll-behavior: smooth; }
+body {
+  background:
+    radial-gradient(900px 480px at 8% -10%, rgba(99,102,241,.12), transparent 65%),
+    radial-gradient(760px 420px at 100% 0%, rgba(20,184,166,.08), transparent 62%),
+    var(--bg);
+  color: var(--text);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  min-height: 100vh;
+  text-rendering: optimizeLegibility;
+}
+::selection { background: rgba(99,102,241,.28); }
+a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+  outline: 2px solid #2dd4bf;
+  outline-offset: 3px;
+}
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 1.15rem;
+  box-shadow: 0 12px 36px rgba(4, 10, 30, .055);
+}
+.dark .card { box-shadow: 0 16px 40px rgba(0, 0, 0, .13); }
+.grad-text {
+  background: linear-gradient(100deg, #8b83ff 4%, #37d6c0 96%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.btn-primary {
+  @apply inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-indigo-600 to-violet-600 px-6 py-3 font-semibold text-white shadow-glow transition duration-200 hover:-translate-y-0.5 hover:opacity-95 active:translate-y-0;
+}
+.btn-ghost {
+  @apply inline-flex items-center justify-center gap-2 rounded-full border px-6 py-3 font-semibold transition duration-200 hover:-translate-y-0.5;
+  border-color: var(--line);
+  color: var(--text);
+}
+.btn-ghost:hover { background: var(--surface-soft); }
+.input {
+  @apply w-full rounded-xl border px-4 py-3 outline-none transition;
+  background: var(--surface);
+  border-color: var(--line);
+  color: var(--text);
+}
+.input:focus { border-color: #818cf8; box-shadow: 0 0 0 3px rgba(99,102,241,.13); }
+.input::placeholder { color: var(--muted); }
+.skeleton { @apply animate-pulse rounded-xl; background: var(--surface-soft); }
+.muted { color: var(--muted); }
+.surface-soft { background: var(--surface-soft); }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+.fade-up { animation: fadeUp .45s ease both; }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
