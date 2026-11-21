@@ -1,0 +1,4 @@
+'use client';
+import { useEffect, useState } from 'react';
+export default function Leaderboard() { const [rows, setRows] = useState<any[]>([]); useEffect(() => { fetch('/api/leaderboard').then(r => r.json()).then(j => setRows(j.leaderboard || [])); }, []);
+  return <div className="mx-auto max-w-2xl py-10"><h1 className="text-3xl font-extrabold">🏆 Leaderboard</h1><p className="opacity-70">Top learners by points. You can hide your profile from public leaderboards in Settings.</p><div className="card mt-6 divide-y divide-indigo-500/10">{rows.map((r, i) => <div key={r.id} className="flex items-center justify-between p-4"><span className="font-bold">{i + 1}. {r.full_name}</span><span className="text-indigo-300 font-semibold">{r.points} pts</span></div>)}{rows.length === 0 && <p className="p-6 text-sm opacity-70">No public learners yet — be the first!</p>}</div></div>; }

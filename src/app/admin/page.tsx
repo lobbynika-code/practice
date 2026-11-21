@@ -1,0 +1,9 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
+export default function Admin() { const [stats, setStats] = useState<any>(null); const [role, setRole] = useState('');
+  useEffect(() => { (async () => { const s = createClient(); const { data: { user } } = await s.auth.getUser(); const { data: prof } = await s.from('profiles').select('role').eq('id', user?.id).single(); setRole(prof?.role || ''); if (['admin','teacher','moderator'].includes(prof?.role || '')) { const [{ count: users }, { count: questions }, { count: sessions }] = await Promise.all([s.from('profiles').select('id', { count: 'exact', head: true }), s.from('questions').select('id', { count: 'exact', head: true }), s.from('practice_sessions').select('id', { count: 'exact', head: true })]); setStats({ users, questions, sessions }); } })(); }, []);
+  if (!['admin','teacher','moderator'].includes(role)) return <div className="py-16 text-center"><h1 className="text-2xl font-extrabold">Admin access required</h1><p className="opacity-70">Your role: {role || 'loading…'} — promote via SQL: update public.profiles set role='admin'.</p></div>;
+  return <div className="py-10"><h1 className="text-3xl font-extrabold">🛠 Admin Dashboard</h1><div className="mt-6 grid gap-4 md:grid-cols-3">{[['Users', stats?.users], ['Questions', stats?.questions], ['Practice sessions', stats?.sessions]].map(([l, v]) => <div key={l} className="card p-5 text-center"><p className="text-3xl font-extrabold grad-text">{v ?? '…'}</p><p className="text-sm opacity-70">{l}</p></div>)}</div>
+  <div className="mt-6 flex flex-wrap gap-3"><Link href="/admin/questions" className="btn-primary !px-4 !py-2 text-sm">Manage Questions</Link><Link href="/admin/subjects" className="btn-ghost !px-4 !py-2 text-sm">Manage Subjects</Link></div></div>; }

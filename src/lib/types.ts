@@ -1,0 +1,4 @@
+export type Role = 'student' | 'teacher' | 'moderator' | 'admin';
+export interface Profile { id: string; full_name: string; avatar_url: string | null; country: string | null; education_level_id: string | null; school: string | null; exam_system: string | null; role: Role; points: number; is_public: boolean; onboarding_done: boolean; created_at: string; }
+export interface Subject { id: string; name: string; slug: string; category: string; description: string | null; icon: string | null; }
+export interface Question { id: string; subject_id: string; topic_id: string | null; education_level_id: string | null; exam_type_id: string | null; question_text: string; question_type: string; difficulty: string; marks: number; explanation: string | null; image_url: string | null; attempts: number; saves: number; likes: number; created_at: string; }

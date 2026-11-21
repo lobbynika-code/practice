@@ -1,0 +1,30 @@
+'use client';
+import { use, useEffect, useRef, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { useToast, Modal } from '@/components/ui';
+export default function ExamRunner({ params }: { params: Promise<{ sessionId: string }> }) {
+  const { sessionId } = use(params); const [questions, setQuestions] = useState<any[]>([]); const [idx, setIdx] = useState(0); const [answers, setAnswers] = useState<Record<string, any>>({}); const [marked, setMarked] = useState<Set<string>>(new Set()); const [timeLeft, setTimeLeft] = useState<number | null>(null); const [confirm, setConfirm] = useState(false); const toast = useToast(); const timer = useRef<any>(null);
+  useEffect(() => { (async () => { const s = createClient(); const { data: session } = await s.from('practice_sessions').select('*').eq('id', sessionId).single(); if (!session) return; if (session.status === 'submitted') { location.href = `/results/${sessionId}`; return; }
+    const { data: sq } = await s.from('practice_session_questions').select('question_id,position').eq('session_id', sessionId).order('position');
+    const ids = (sq || []).map(r => r.question_id); const { data: qs } = await s.from('questions').select('id,question_text,question_type,image_url').in('id', ids);
+    const { data: opts } = await s.from('question_options').select('id,question_id,option_text,position').in('question_id', ids).order('position');
+    const ordered = (sq || []).map(r => { const q = (qs || []).find(x => x.id === r.question_id); return { ...q, options: (opts || []).filter(o => o.question_id === r.question_id) }; }).filter(Boolean);
+    setQuestions(ordered);
+    const { data: saved } = await s.from('student_answers').select('*').eq('session_id', sessionId); const map: any = {}; (saved || []).forEach(a => { map[a.question_id] = a.selected_option_id || a.selected_text; if (a.marked_for_review) setMarked(m => new Set(m).add(a.question_id)); }); setAnswers(map);
+    if (session.timed && session.duration_seconds) { const elapsed = Math.floor((Date.now() - new Date(session.started_at).getTime()) / 1000); setTimeLeft(Math.max(0, session.duration_seconds - elapsed)); }
+  })(); }, [sessionId]);
+  useEffect(() => { if (timeLeft === null) return; if (timeLeft <= 0) { submit(); return; } timer.current = setTimeout(() => setTimeLeft(t => (t ?? 1) - 1), 1000); return () => clearTimeout(timer.current); });
+  const save = async (qid: string, val: any, mark = false) => { setAnswers(a => ({ ...a, [qid]: val })); await fetch('/api/exam/answer', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId, question_id: qid, selected_option_id: typeof val === 'string' && val.length > 30 ? null : val, selected_text: typeof val === 'string' && val.length > 30 ? val : null, marked_for_review: mark }) }); };
+  const submit = async () => { const res = await fetch('/api/exam/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ session_id: sessionId }) }); const j = await res.json(); if (!res.ok) return toast(j.error || 'Submit failed'); location.href = `/results/${sessionId}`; };
+  if (!questions.length) return <div className="py-16 text-center">Loading exam…</div>;
+  const q = questions[idx]; const fmt = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+  return <div className="mx-auto max-w-3xl py-8"><div className="flex items-center justify-between"><h1 className="font-extrabold">Practice Exam</h1>{timeLeft !== null && <span className="rounded-full bg-red-500/15 px-4 py-1 font-mono text-red-400">⏱ {fmt(timeLeft)}</span>}</div>
+    <div className="mt-3 h-2 rounded bg-slate-700/40"><div className="h-2 rounded bg-indigo-500" style={{ width: `${((idx + 1) / questions.length) * 100}%` }} /></div>
+    <p className="mt-2 text-sm opacity-70">Question {idx + 1} of {questions.length} {marked.has(q.id) && '· 🔖 marked'}</p>
+    <div className="card mt-4 p-6"><p className="text-lg font-semibold">{q.question_text}</p>{q.image_url && <img src={q.image_url} alt="Question diagram" className="mt-3 max-h-64 rounded" />}
+    {q.question_type === 'multiple_choice' || q.question_type === 'true_false' ? <div className="mt-4 space-y-2">{q.options.map((o: any) => <button key={o.id} onClick={() => save(q.id, o.id)} className={`block w-full rounded-xl border p-3 text-left ${answers[q.id] === o.id ? 'border-indigo-500 bg-indigo-500/15' : 'border-slate-600/40'}`}>{o.option_text}</button>)}</div>
+    : <textarea className="input mt-4" rows={4} placeholder="Type your answer…" value={answers[q.id] || ''} onChange={e => save(q.id, e.target.value)} />}
+    <div className="mt-5 flex flex-wrap gap-3"><button className="btn-ghost !px-4 !py-2 text-sm" disabled={idx === 0} onClick={() => setIdx(i => i - 1)}>← Previous</button><button className="btn-ghost !px-4 !py-2 text-sm" onClick={() => { const m = new Set(marked); m.has(q.id) ? m.delete(q.id) : m.add(q.id); setMarked(m); save(q.id, answers[q.id], m.has(q.id)); }}>🔖 Mark for review</button>{idx < questions.length - 1 ? <button className="btn-primary !px-4 !py-2 text-sm" onClick={() => setIdx(i => i + 1)}>Next →</button> : <button className="btn-primary !px-4 !py-2 text-sm" onClick={() => setConfirm(true)}>Submit Exam</button>}</div></div>
+    <div className="mt-4 flex flex-wrap gap-1">{questions.map((x, i) => <button key={x.id} onClick={() => setIdx(i)} className={`h-9 w-9 rounded-lg text-sm ${i === idx ? 'bg-indigo-600 text-white' : answers[x.id] ? 'bg-indigo-500/30' : 'bg-slate-700/40'}`}>{i + 1}</button>)}</div>
+    <Modal open={confirm} onClose={() => setConfirm(false)} title="Submit examination?"><p className="text-sm">You have answered {Object.keys(answers).length} of {questions.length} questions. This cannot be undone.</p><div className="mt-4 flex gap-3"><button className="btn-ghost !px-4 !py-2 text-sm" onClick={() => setConfirm(false)}>Keep working</button><button className="btn-primary !px-4 !py-2 text-sm" onClick={submit}>Submit</button></div></Modal></div>;
+}

@@ -1,0 +1,2 @@
+import Link from 'next/link';
+export default function Footer() { return <footer className="mt-16 border-t border-indigo-500/20 py-10 text-center text-sm opacity-80"><p className="font-bold">VitalLearn — Learn. Practise. Excel.</p><p className="mt-2">Built for students in Ghana and worldwide. Contact: support@vitallearn.example</p><div className="mt-3 flex justify-center gap-4"><Link href="/pricing">Pricing</Link><Link href="/about">About</Link><Link href="/features">Features</Link></div></footer>; }

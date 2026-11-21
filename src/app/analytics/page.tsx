@@ -1,0 +1,14 @@
+'use client';
+import { useEffect, useState } from 'react';
+import { createClient } from '@/lib/supabase/client';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+export default function Analytics() { const [sessions, setSessions] = useState<any[]>([]); const [bySubject, setBySubject] = useState<any[]>([]);
+  useEffect(() => { (async () => { const s = createClient(); const { data: { user } } = await s.auth.getUser(); const { data } = await s.from('practice_sessions').select('*,subjects(name)').eq('user_id', user?.id).eq('status', 'submitted').order('submitted_at'); setSessions(data || []);
+    const map: Record<string, any> = {}; (data || []).forEach((x: any) => { const k = x.subjects?.name || 'Mixed'; map[k] = map[k] || { name: k, correct: 0, total: 0 }; map[k].correct += x.correct_count || 0; map[k].total += x.total_questions || 0; }); setBySubject(Object.values(map).map((v: any) => ({ ...v, accuracy: v.total ? Math.round(v.correct / v.total * 100) : 0 }))); })(); }, []);
+  const total = sessions.reduce((a, s) => a + (s.total_questions || 0), 0); const correct = sessions.reduce((a, s) => a + (s.correct_count || 0), 0);
+  const weekly = sessions.map(s => ({ name: new Date(s.submitted_at).toLocaleDateString(), accuracy: s.percentage }));
+  return <div className="py-10"><h1 className="text-3xl font-extrabold">📊 Your Analytics</h1>{sessions.length === 0 ? <div className="card mt-6 p-8 text-center"><p>No activity yet — complete a practice exam to see your analytics.</p></div> : <>
+  <div className="mt-6 grid gap-4 md:grid-cols-3">{[['Accuracy', total ? Math.round(correct / total * 100) + '%' : '—'], ['Questions attempted', total], ['Exams completed', sessions.length]].map(([l, v]) => <div key={l} className="card p-5 text-center"><p className="text-3xl font-extrabold grad-text">{v}</p><p className="text-sm opacity-70">{l}</p></div>)}</div>
+  <div className="card mt-6 p-5"><h2 className="font-bold">Accuracy by subject</h2><div className="h-64"><ResponsiveContainer><BarChart data={bySubject}><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="accuracy" fill="#6366f1" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+  <div className="card mt-6 p-5"><h2 className="font-bold">Accuracy over time</h2><div className="h-64"><ResponsiveContainer><BarChart data={weekly}><XAxis dataKey="name" /><YAxis /><Tooltip /><Bar dataKey="accuracy" fill="#14b8a6" radius={[6, 6, 0, 0]} /></BarChart></ResponsiveContainer></div></div>
+  <div className="card mt-6 p-5"><h2 className="font-bold">Strengths & focus areas</h2><ul className="mt-2 text-sm space-y-1">{bySubject.map(s => <li key={s.name}>{s.name}: {s.accuracy}% accuracy {s.accuracy >= 70 ? '— strong 💪' : '— revise this topic 📚'}</li>)}</ul></div></>}</div>; }

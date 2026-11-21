@@ -1,0 +1,14 @@
+'use client';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+function Tutor() { const sp = useSearchParams(); const [msgs, setMsgs] = useState<{ role: string; content: string }[]>([]); const [input, setInput] = useState(sp.get('question') || ''); const [cid, setCid] = useState(''); const [loading, setLoading] = useState(false); const [notice, setNotice] = useState('');
+  const send = async (text: string) => { if (!text.trim()) return; setMsgs(m => [...m, { role: 'user', content: text }]); setInput(''); setLoading(true);
+    const res = await fetch('/api/ai/chat', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ message: text, conversation_id: cid || undefined, mode: 'tutor' }) }); const j = await res.json(); setLoading(false);
+    if (!res.ok) { setNotice(j.error || 'Something went wrong.'); return; } setCid(j.conversation_id); setMsgs(m => [...m, { role: 'assistant', content: j.reply }]); };
+  const quick = (label: string, fn: (last: string) => string) => { const last = [...msgs].reverse().find(m => m.role === 'user')?.content || 'the last question'; send(fn(last)); };
+  return <div className="mx-auto max-w-3xl py-10"><h1 className="text-3xl font-extrabold">🤖 AI Solution Tutor</h1><p className="opacity-70">Step-by-step explanations, hints and follow-ups. Always verify answers against your learning materials.</p>
+  {notice && <div className="card mt-4 border-amber-400/50 p-4 text-sm text-amber-300">{notice}</div>}
+  <div className="card mt-5 min-h-64 p-5 space-y-3">{msgs.length === 0 && <p className="text-sm opacity-60">Ask any academic question — paste a question, or ask for a hint before the solution.</p>}{msgs.map((m, i) => <div key={i} className={`whitespace-pre-wrap rounded-xl p-3 text-sm ${m.role === 'user' ? 'bg-indigo-600 text-white ml-10' : 'bg-slate-700/30 mr-10'}`}>{m.content}</div>)}{loading && <p className="text-sm opacity-60">Thinking…</p>}</div>
+  <div className="mt-3 flex flex-wrap gap-2">{[['Give me a hint first', (q: string) => `Give me a hint (not the full solution) for: ${q}`], ['Explain more simply', (q: string) => `Explain this more simply: ${q}`], ['Show another method', (q: string) => `Show me another solution method for: ${q}`], ['Give a similar example', (q: string) => `Give me a similar worked example for: ${q}`]].map(([l, f]: any) => <button key={l} onClick={() => quick(l, f)} className="rounded-full border border-indigo-400/40 px-3 py-1 text-xs">{l}</button>)}</div>
+  <form onSubmit={e => { e.preventDefault(); send(input); }} className="mt-3 flex gap-2"><input className="input" placeholder="Type or paste your question…" value={input} onChange={e => setInput(e.target.value)} /><button className="btn-primary !px-5">Send</button></form></div>; }
+export default function AiTutor() { return <Suspense><Tutor /></Suspense>; }

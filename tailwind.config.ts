@@ -1,0 +1,2 @@
+import type { Config } from 'tailwindcss';
+export default { content: ['./src/**/*.{ts,tsx}'], darkMode: 'class', theme: { extend: { colors: { ink: '#050b1f', navy: '#0a1633', brand: { 50:'#eef2ff',100:'#e0e7ff',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca' }, tealx: '#14b8a6' }, fontFamily: { sans: ['Inter','system-ui','sans-serif'] }, boxShadow: { glow: '0 0 40px rgba(99,102,241,.35)' } } }, plugins: [] } satisfies Config;
