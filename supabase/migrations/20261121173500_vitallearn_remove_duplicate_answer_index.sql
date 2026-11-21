@@ -1,0 +1,1 @@
+drop index if exists public.student_answers_session_question_uidx;
