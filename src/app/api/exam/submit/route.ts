@@ -59,17 +59,11 @@ export async function POST(req: NextRequest) {
       correct_count: correct, submitted_at: new Date().toISOString()
     }).eq('id', session.id).eq('status', 'submitting');
     if (finishError) throw finishError;
-    const { error: attemptsError } = await admin.from('questions').update({ attempts: 0 }).in('id', []);
-    if (attemptsError) throw attemptsError;
     for (const qid of qids) {
       const { error } = await admin.rpc('increment_attempts', { qid });
       if (error) throw error;
     }
-    const { error: ledgerError } = await admin.from('points_transactions').insert({
-      user_id: user.id, points, reason: 'exam_submission', reference_id: session.id
-    });
-    if (ledgerError) throw ledgerError;
-    const { error: pointsError } = await admin.rpc('add_points', { uid: user.id, pts: points });
+    const { error: pointsError } = await admin.rpc('award_exam_points', { p_session_id: session.id, p_points: points });
     if (pointsError) throw pointsError;
     await admin.from('learning_activity').insert({
       user_id: user.id, activity_type: 'exam_completed',
