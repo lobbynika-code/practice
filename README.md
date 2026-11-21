@@ -1,5 +1,7 @@
 # VitalLearn — Learn. Practise. Excel.
 
+**Live:** https://vitallearn.vercel.app
+
 All-in-one digital learning & examination preparation platform (Next.js + Supabase). Built for students in Ghana and worldwide: basic school → SHS → university → professional exams.
 
 ## Stack
